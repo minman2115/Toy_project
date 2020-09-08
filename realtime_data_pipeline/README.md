@@ -95,7 +95,7 @@ while True:
     count+=1
 ```
 
-#### STEP 2. AWS SQS 생성
+#### STEP 2. AWS SQS 설정
 
 AWS SQS 역할 : 특정 S3 경로에 데이터가 업로드 되면 Fluentd에게 event notification
 
