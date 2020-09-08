@@ -1,14 +1,22 @@
 ﻿[구현목표 아키텍처]
 
+
 ![image](https://user-images.githubusercontent.com/41605276/92443972-352e6e80-f1ed-11ea-91cd-f882c4baa80e.png)
 
 - 로컬 피시의 cpu/memory 메트릭을 실시간으로 csv 파일로 저장해서 매 1분마다 s3로 업로드하면 위와 같은 파이프라인을 거쳐 ES에 적재되 kibana로 시각화까지하는 아키텍처
 
 
-- S3에 업로드 된 csv 파일을 소스로 사용하여 flentd가 SQS의 이벤트 트리거(s3에 csv파일이 업로드 되었다는)를 받아서 kinesis에 데이터를 json 포맷으로 전송
+- S3에 업로드 된 csv 파일을 소스로 사용하여 fluentd가 SQS의 이벤트 트리거(s3에 csv파일이 업로드 되었다는)를 받아서 kinesis에 데이터를 json 포맷으로 전송
 
 
 - kinesis streams에 들어온 데이터를 lambda가 받아서 ES에 적재 후 시각화
+
+#### STEP 0. 사전작업
+
+위와 같은 데이터 파이프라인 구현을 위해 필요한 AWS 인프라에 대해서 미리 콘솔에서 Set up 해야 합니다.
+
+(network 인프라, s3, sqs, ec2, kinesis, lambda, es, 보안그룹 설정, iam role 등)
+
 
 #### STEP 1. LocalPC to S3 실시간 데이터 전송 파이프라인 구축
 
@@ -91,88 +99,8 @@ while True:
 
 AWS SQS 역할 : 특정 S3 경로에 데이터가 업로드 되면 Fluentd에게 event notification
 
-Terraform으로 생성한 SQS 양식
+따라서 특정 s3 버킷경로에 .csv 파일이 업로드 되면  " s3:ObjectCreated:* " event가 발동하도록 설정해줘야 한다.
 
-- provider.tf
-
-
-```python
-provider "aws" {
-  # ... other configuration ...
-
-  version = "~> 2.8"
-  
-}
-
-variable "project_name" {
-  type = string
-  description = "project의 이름을 입력하세요."
-}
-```
-
-- s3.tf
-
-
-```python
-resource "aws_s3_bucket" "tf_S3_manage" {
-    bucket   = "${var.project_name}"
-    acl      = "private"
-    versioning {
-        enabled    = false
-        mfa_delete = false
-    }
-    tags = {
-        Name        = "tf_S3_bucket_manage"
-        Environment = "POC"
-        owner=var.tag_owner
-    }
-    server_side_encryption_configuration {
-        rule {
-            apply_server_side_encryption_by_default {
-                sse_algorithm  = "AES256"
-            }
-        }
-  }
-}
-```
-
-- sqs.tf
-
-
-```python
-//policy, arn s3 경로 등 수정 필요
-resource "aws_sqs_queue" "queue" {
-  name = "${var.project_name}-s3-event-notification-queue"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "sqs:SendMessage",
-      "Resource": "arn:aws:sqs:*:*:${var.project_name}-s3-event-notification-queue",
-      "Condition": {
-        "ArnEquals": { "aws:SourceArn": "${aws_s3_bucket.tf_S3_manage.arn}" }
-      }
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.tf_S3_manage.id
-
-  queue {
-    queue_arn     = aws_sqs_queue.queue.arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_prefix = "[prefix name of s3 bucket]/"
-    filter_suffix = ".csv"
-  }
-}
-```
 
 #### STEP 3. EC2에서 Fluentd agent 설정
 
@@ -406,11 +334,16 @@ name : iac_libs --> upload a zip file로 python.zip을 업로드 --> runtimes py
 
 그런 다음에 작업하는 lambda function으로 이동 후 layers 클릭 --> 하단에 add a layer 클릭 --> 위에서 생성한 layer 등록
 
-#### ** 주의사항 :  반드시 람다에 layer로 넣을 라이브러리들의 폴더이름은 python으로 해야한다 안그러면 인식을 못한다.
 
-#### 파일구조도 python.zip 파일을 클릭해서 조회하면 python 폴더가 보여야지 라이브러리들이 바로 보이면 안된다.
+
+#### ** 주의사항 : 반드시 람다에 layer로 넣을 라이브러리들의 폴더이름은 python으로 해야한다 안그러면 인식을 못한다.
+
+
+#### 폴더구조도 python.zip 파일을 클릭해서 조회하면 python 폴더가 보여야지 라이브러리들이 바로 보이면 안된다.
+
 
 #### python.zip --> python --> 라이브러리들 .. (O)
+
 
 #### python.zip --> 라이브러리들.. (X)
 
