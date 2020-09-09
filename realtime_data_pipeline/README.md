@@ -1,7 +1,7 @@
 ﻿[구현목표 아키텍처]
 
 
-![image](https://user-images.githubusercontent.com/41605276/92443972-352e6e80-f1ed-11ea-91cd-f882c4baa80e.png)
+![image](https://user-images.githubusercontent.com/41605276/92581022-194cca80-f2ca-11ea-861f-1b4e3fd3fedf.png)
 
 - 로컬 피시의 cpu/memory 메트릭을 실시간으로 csv 파일로 저장해서 매 1분마다 s3로 업로드하면 위와 같은 파이프라인을 거쳐 ES에 적재되 kibana로 시각화까지하는 아키텍처
 
