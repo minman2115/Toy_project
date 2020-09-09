@@ -99,6 +99,10 @@ while True:
 
 AWS SQS 역할 : 특정 S3 경로에 데이터가 업로드 되면 Fluentd에게 event notification
 
+데이터가 s3에 적재되면 Event가 발생하고, 해당 이벤트가 sqs를 거쳐서 fluentd로 전송됨
+
+fluentd가 수신한 event에 csv 정보를 참조하여 직접 s3로부터 데이터를 끌어와서 kinesis로 전송하는 구조
+
 따라서 특정 s3 버킷경로에 .csv 파일이 업로드 되면  " s3:ObjectCreated:* " event가 발동하도록 설정해줘야 한다.
 
 
