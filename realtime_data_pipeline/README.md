@@ -503,3 +503,7 @@ ssh -i [keyname].pem ec2-user@[베스천PublicIP] -L 9200:vpc-xxxx-rtd-cluster-x
 - 키바나에 적재되는 데이터 예시
 
 ![kibana result](https://user-images.githubusercontent.com/41605276/92083565-30d70f80-ee01-11ea-9740-08d57d1aa07e.png)
+
+- 키바나에서 대시보드 구현하기
+
+![how_to_make_kibana_dashboard](https://user-images.githubusercontent.com/41605276/92557692-c3672b00-f2a7-11ea-9988-1e0f8a48c6d9.png)
